@@ -1,0 +1,21 @@
+#### examples of operation ####
+
+# particle_registers[0:2] # QuantumRegisterのリスト [QuantumRegister(4, 'particle0'), QuantumRegister(4, 'particle1')]
+# particle_registers[:2][1] # QuantumRegister # リストの第１成分 QuantumRegister(4, 'particle1')
+# particle_registers[:2][1][0:2] # Qubitのリスト
+# particle_registers[:2][1][0] # Qubit # Qubit(QuantumRegister(4, 'particle1'), 0)
+
+## operate x gate to one certain qubit
+# circuit.x(((L + 1) * d + 1) * M)
+# circuit.h(particle_registers[0])
+# circuit.h(particle_registers[0])
+# circuit.h(ancilla_register_h0[1])
+
+## operate x gate to one certain particle register
+# circuit.x(particle_registers[0])
+
+## operate x gate to all qubits
+# for i in range(M):
+#     circuit.x(particle_registers[i])
+
+# circuit.draw('mpl') # 1つのparticleに対して下位 L* d ビットが運動量の大きさ、次のdビットが符号、最後1ビットがoccupancy

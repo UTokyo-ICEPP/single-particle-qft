@@ -19,3 +19,246 @@
 #     circuit.x(particle_registers[i])
 
 # circuit.draw('mpl') # 1つのparticleに対して下位 L* d ビットが運動量の大きさ、次のdビットが符号、最後1ビットがoccupancy
+
+## incrementGates
+def increGate(reg_size):
+#     inc_num = reg_size
+#     inc_circuit = QuantumCircuit(inc_num + 1)
+#     inc_circuit.x(inc_num)
+#     for iqubit in range(inc_num):
+#         inc_circuit.cx(inc_num, iqubit)
+#         if iqubit > 0:
+#             inc_circuit.x(range(iqubit))
+#         if iqubit == inc_num - 1:
+#             inc_circuit.x(inc_num - 1)
+#             inc_circuit.x(inc_num)
+#         inc_circuit.mcx(list(range(iqubit + 1)), inc_num)
+#         if iqubit > 0:
+#             inc_circuit.x(range(iqubit))
+#         if iqubit == inc_num - 1:
+#             inc_circuit.x(inc_num - 1)
+#             inc_circuit.x(inc_num)
+#     inc_gate = inc_circuit.to_gate()
+#     return inc_gate
+
+# def invIncreGate(reg_size):
+#     inv_inc_num = reg_size
+#     inv_inc_circuit = QuantumCircuit(inv_inc_num + 1)
+#     for iqubit in range(inv_inc_num - 1, -1, -1):
+#         if iqubit > 0:
+#             inv_inc_circuit.x(range(iqubit))
+#         if iqubit == inv_inc_num - 1:
+#             inv_inc_circuit.x(inv_inc_num - 1)
+#             inv_inc_circuit.x(inv_inc_num)
+#         inv_inc_circuit.mcx(list(range(iqubit + 1)), inv_inc_num)
+#         if iqubit > 0:
+#             inv_inc_circuit.x(range(iqubit))
+#         if iqubit == inv_inc_num - 1:
+#             inv_inc_circuit.x(inv_inc_num - 1)
+#             inv_inc_circuit.x(inv_inc_num)
+#         inv_inc_circuit.cx(inv_inc_num, iqubit)
+#     inv_inc_circuit.x(inv_inc_num)
+#     inv_inc_gate = inv_inc_circuit.to_gate()
+#     return inv_inc_gate
+
+# # example and visualization of increment operation
+# circuit, particle_regs, anc_reg_h0, anc_reg_symm, anc_incre, cla_reg_symm, particle_1D_list = init(M, N_abs, d)
+# inc_gate= increGate(particle_regs[0].size)
+# circuit.x(particle_regs[0][:])
+# circuit.barrier()
+# circuit.append(inc_gate, qargs=particle_regs[0][:] + [anc_incre])
+# circuit.decompose().draw('mpl')
+
+
+## interaction Hamiltonian
+# n = 4
+# M = 4
+# N_abs = 1
+# circuit, particle_regs, anc_reg_h0, anc_reg_symm, anc_incre, cla_reg_symm, particle_1D_list = init(M, N_abs, d)
+
+# # args are iposition, ireg, jreg, kreg, lreg
+# delta = 1
+# coupling_lambda = 0.1
+# ipos = 2
+# Delta = delta * coupling_lambda / 96
+# pos_bits = bin(ipos)[2:]
+# ireg = particle_regs[0]
+# jreg = particle_regs[1]
+# kreg = particle_regs[2]
+# lreg = particle_regs[3]
+# nfrak = 2 * ireg.size
+
+# for ibit in range(N_abs * d + d): # flip qubits to make |qi>|-qj> <=> |11...1>
+#     if len(pos_bits) > ibit:
+#         if int(pos_bits[-(ibit+1)]) == 1:
+#             circuit.cx(ireg[(N_abs + 1) * d], ireg[ibit])
+#             circuit.cx(jreg[(N_abs + 1) * d], jreg[ibit])
+#             circuit.cx(kreg[(N_abs + 1) * d], kreg[ibit])
+#             circuit.cx(lreg[(N_abs + 1) * d], lreg[ibit])
+# circuit.cx(lreg[(N_abs + 1) * d], ireg[(N_abs + 1) * d])
+# circuit.cx(lreg[(N_abs + 1) * d], jreg[(N_abs + 1) * d])
+# circuit.cx(lreg[(N_abs + 1) * d], kreg[(N_abs + 1) * d])
+
+# circuit.barrier()
+
+# circuit.x(ireg[:N])
+# circuit.x(jreg[:N])
+# circuit.x(kreg[:N])
+# circuit.x(lreg[:N_abs + d])
+# mcrx = RXGate(Delta * 1000).control(4 * ireg.size - 1)
+# mcrx.name = 'MultiCNOT'
+# circuit.append(mcrx, qargs=ireg[:] + jreg[:] + kreg[:] + lreg[:jreg.size-1] + [lreg[lreg.size-1]])
+# circuit.x(ireg[:N])
+# circuit.x(jreg[:N])
+# circuit.x(kreg[:N])
+# circuit.x(lreg[:N_abs + d])
+
+# circuit.barrier()
+
+# circuit.cx(lreg[(N_abs + 1) * d], ireg[(N_abs + 1) * d])
+# circuit.cx(lreg[(N_abs + 1) * d], jreg[(N_abs + 1) * d])
+# circuit.cx(lreg[(N_abs + 1) * d], kreg[(N_abs + 1) * d])
+# for ibit in range(N_abs * d + d): # flip qubits to make |qi>|-qj> <=> |11...1>
+#     if len(pos_bits) > ibit:
+#         if int(pos_bits[-(ibit+1)]) == 1:
+#             circuit.cx(ireg[(N_abs + 1) * d], ireg[ibit])
+#             circuit.cx(jreg[(N_abs + 1) * d], jreg[ibit])
+#             circuit.cx(kreg[(N_abs + 1) * d], kreg[ibit])
+#             circuit.cx(lreg[(N_abs + 1) * d], lreg[ibit])
+
+# circuit.draw('mpl')
+
+
+
+# interaction Hamiltonian to optimize # of QuantumGates
+
+## optimization of CNOT
+# n = 4
+# M = 4
+# N_abs = 1
+# N = N_abs * d + d + 1
+# circuit, particle_regs, anc_reg_h0, anc_reg_symm, anc_incre, cla_reg_symm, particle_1D_list = init(M, N_abs, d)
+
+# hamming_list = ['1000', '1100', '0100', '0110', '0010', '0000', '0001', '0101']
+# ipos = 2
+# delta = 1
+# coupling_lambda = 0.1
+# Delta = delta * coupling_lambda / 96
+# ireg = particle_regs[0]
+# jreg = particle_regs[1]
+# kreg = particle_regs[2]
+# lreg = particle_regs[3]
+# pos_bits = bin(ipos)[2:]
+# reg_list = [ireg, jreg, kreg, lreg]
+
+# for inum, ihamming in enumerate(hamming_list):
+#     if inum == 0:
+#         for istring in range(len(hamming_list[0])):
+#             if hamming_list[inum][istring] == '1':
+#                 for ibit in range(N_abs * d + d):
+#                     if len(pos_bits) > ibit:
+#                         if int(pos_bits[-(ibit+1)]) == 1:
+#                             circuit.x(reg_list[istring][ibit])
+#                             circuit.x(reg_list[istring][N-1])
+#         for ibit in range(N_abs * d + d): # flip qubits to make |qi>|-qj> <=> |11...1>
+#             if len(pos_bits) > ibit:
+#                 if int(pos_bits[-(ibit+1)]) == 1:
+#                     for xreg in reg_list:
+#                         circuit.cx(xreg[(N_abs + 1) * d], xreg[ibit])
+#         for xnum, xreg in enumerate(reg_list):
+#             if xnum != 3:
+#                 circuit.cx(lreg[(N_abs + 1) * d], xreg[(N_abs + 1) * d])
+
+#         circuit.barrier()
+#         circuit.x(ireg[:N] + jreg[:N] + kreg[:N] + lreg[:N_abs+d])
+#         mcrx = RXGate(Delta * 1000).control(4 * ireg.size - 1)
+#         mcrx.name = 'MultiCNOT'
+#         circuit.append(mcrx, qargs=ireg[:] + jreg[:] + kreg[:] + lreg[:jreg.size-1] + [lreg[lreg.size-1]])
+#         circuit.x(ireg[:N] + jreg[:N] + kreg[:N] + lreg[:N_abs+d])
+#         circuit.barrier()
+
+#     elif inum < len(hamming_list) - 1:
+#         for istring in range(len(hamming_list[0])):
+#             if inum == 0:
+#                 break
+#             if hamming_list[inum - 1][istring] != hamming_list[inum][istring]:
+#                 if istring != 3:
+#                     for ibit in range(N_abs * d + d):
+#                         if len(pos_bits) > ibit:
+#                             if int(pos_bits[-(ibit+1)]) == 1:
+#                                 circuit.cx(reg_list[istring][N-1], reg_list[istring][ibit])
+#                                 circuit.cx(lreg[N-1], reg_list[istring][N-1])
+#                                 circuit.x(reg_list[istring][ibit])
+#                                 circuit.x(reg_list[istring][N-1])
+#                                 circuit.cx(lreg[N-1], reg_list[istring][N-1])
+#                                 circuit.cx(reg_list[istring][N-1], reg_list[istring][ibit])
+#                 elif istring == 3:
+#                     for ibit in range(N_abs * d + d):
+#                         if len(pos_bits) > ibit:
+#                             if int(pos_bits[-(ibit+1)]) == 1:
+#                                 circuit.cx(lreg[N-1], lreg[ibit])
+#                                 circuit.x(lreg[ibit])
+#                                 circuit.x(lreg[N-1])
+#                                 circuit.cx(lreg[N-1], lreg[ibit])
+#                 else: print(f'You have something wrong with {istring}th string')
+#         circuit.barrier()
+#         circuit.x(ireg[:N] + jreg[:N] + kreg[:N] + lreg[:N_abs+d])
+#         mcrx = RXGate(Delta * 1000).control(4 * ireg.size - 1)
+#         mcrx.name = 'MultiCNOT'
+#         circuit.append(mcrx, qargs=ireg[:] + jreg[:] + kreg[:] + lreg[:jreg.size-1] + [lreg[lreg.size-1]])
+#         circuit.x(ireg[:N] + jreg[:N] + kreg[:N] + lreg[:N_abs+d])
+#         circuit.barrier()
+
+#     elif inum == len(hamming_list) - 1:
+#         for istring in range(len(hamming_list[0])):
+#             if inum == 0:
+#                 break
+#             if hamming_list[inum - 1][istring] != hamming_list[inum][istring]:
+#                 targstring = istring
+#                 if istring != 3:
+#                     for ibit in range(N_abs * d + d):
+#                         if len(pos_bits) > ibit:
+#                             if int(pos_bits[-(ibit+1)]) == 1:
+#                                 circuit.cx(reg_list[istring][N-1], reg_list[istring][ibit])
+#                                 circuit.cx(lreg[N-1], reg_list[istring][N-1])
+#                                 circuit.x(reg_list[istring][ibit])
+#                                 circuit.x(reg_list[istring][N-1])
+#                                 circuit.cx(lreg[N-1], reg_list[istring][N-1])
+#                                 circuit.cx(reg_list[istring][N-1], reg_list[istring][ibit])
+#                 elif istring == 3:
+#                     for ibit in range(N_abs * d + d):
+#                         if len(pos_bits) > ibit:
+#                             if int(pos_bits[-(ibit+1)]) == 1:
+#                                 circuit.cx(lreg[N-1], lreg[ibit])
+#                                 circuit.x(lreg[ibit])
+#                                 circuit.x(lreg[N-1])
+#                                 circuit.cx(lreg[N-1], lreg[ibit])
+#                 else: print(f'You have something wrong with {istring}th string')
+#         circuit.barrier()
+
+#         circuit.x(ireg[:N] + jreg[:N] + kreg[:N] + lreg[:N_abs+d])
+#         mcrx = RXGate(Delta * 1000).control(4 * ireg.size - 1)
+#         mcrx.name = 'MultiCNOT'
+#         circuit.append(mcrx, qargs=ireg[:] + jreg[:] + kreg[:] + lreg[:jreg.size-1] + [lreg[lreg.size-1]])
+#         circuit.x(ireg[:N] + jreg[:N] + kreg[:N] + lreg[:N_abs+d])
+
+#         circuit.barrier()
+#         for ibit in range(N_abs * d + d):
+#             if len(pos_bits) > ibit:
+#                 if int(pos_bits[-(ibit+1)]) == 1:
+#                     for xreg in reg_list:
+#                         circuit.cx(xreg[(N_abs + 1) * d], xreg[ibit])
+#         for xnum, xreg in enumerate(reg_list):
+#             if xnum != 3:
+#                 circuit.cx(lreg[(N_abs + 1) * d], xreg[(N_abs + 1) * d])
+#         circuit.barrier()
+        
+#         for istring in range(len(hamming_list[0])):
+#             if hamming_list[inum][istring] == '1':
+#                 for ibit in range(N_abs * d + d):
+#                     if len(pos_bits) > ibit:
+#                         if int(pos_bits[-(ibit+1)]) == 1:
+#                             circuit.x(reg_list[istring][ibit])
+#                             circuit.x(reg_list[istring][N-1])
+
+# circuit.draw('mpl')

@@ -262,3 +262,14 @@ def increGate(reg_size):
 #                             circuit.x(reg_list[istring][N-1])
 
 # circuit.draw('mpl')
+
+
+## sample
+# from qiskit import QuantumCircuit, QuantumRegister
+# from qiskit.circuit import Gate
+
+# test_circuit = QuantumCircuit(3)
+# custom_gate = Gate(name='Gate', num_qubits=3, params=[0.1, 0.2]) # maek meaningless Gate
+# test_circuit.append(custom_gate, qargs=[0, 1, 2])
+
+# test_circuit.decompose().draw('mpl')

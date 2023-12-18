@@ -273,3 +273,65 @@ def increGate(reg_size):
 # test_circuit.append(custom_gate, qargs=[0, 1, 2])
 
 # test_circuit.decompose().draw('mpl')
+
+## interaction scheme
+n = 4
+M = 4
+N_abs = 1
+d = 1
+N = N_abs * d + d + 1
+circuit, particle_regs, anc_reg_h0, anc_reg_symm, cla_reg_symm, cla_measure, particle_1D_list = init(M, N_abs, d)
+hamming_list = ['1000', '1100', '0100', '0110', '0010', '0000', '0001', '0101']
+two_hamming_list = ['00', '10']
+three_hamming_list = ['000', '010', '011', '001', '101', '111', '110', '100'] # ith register corresponds to invariant register
+three_hamming_list = ['000']
+delta = 1
+coupling_lambda = 0.1
+Delta = delta * coupling_lambda / (96 * (M ** 2))
+
+for ipos in range(2 ** (N_abs * d + d)):
+    for inum, ireg in enumerate(particle_regs):
+        for jnum, jreg in enumerate(particle_regs):
+            for knum, kreg in enumerate(particle_regs):
+                for lnum, lreg in enumerate(particle_regs):
+                    if inum <= jnum and jnum <= knum and knum <= lnum:
+                        if inum == jnum:
+                            if jnum == knum:
+                                if knum == lnum:
+                                    int_gate = intHamiltonianFourIndices(ireg, ipos, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=ireg[:])
+                                else:
+                                    int_gate = intHamiltonianThreeIndices(ireg, lreg, ipos, two_hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=ireg[:]+lreg[:])
+                            else:
+                                if knum == lnum:
+                                    int_gate = intHamiltonianTwoPairs(ireg, kreg, ipos, two_hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=ireg[:]+kreg[:])
+                                else:
+                                    int_gate = intHamiltonianTwoIndices(ireg, kreg, lreg, ipos, three_hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=ireg[:]+kreg[:]+lreg[:])
+                        else:
+                            if jnum == knum:
+                                if knum == lnum:
+                                    int_gate = intHamiltonianThreeIndices(ireg, jreg, ipos, two_hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=ireg[:]+jreg[:])
+                                else:
+                                    int_gate = intHamiltonianTwoIndices(jreg, ireg, lreg, ipos, three_hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=jreg[:]+ireg[:]+lreg[:])
+                            else:
+                                if knum == lnum:
+                                    int_gate = intHamiltonianTwoIndices(kreg, ireg, jreg, ipos, three_hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=kreg[:]+ireg[:]+jreg[:])
+                                else:
+                                    int_gate = interactionHamiltonianAllDiffer(ireg, jreg, kreg, lreg, ipos, hamming_list, Delta)
+                                    int_gate.name = f'pos{ipos} intH'
+                                    circuit.append(int_gate, qargs=ireg[:]+jreg[:]+kreg[:]+lreg[:])
+
+circuit.draw('mpl')

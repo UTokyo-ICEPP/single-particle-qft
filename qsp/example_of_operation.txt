@@ -335,3 +335,148 @@ for ipos in range(2 ** (N_abs * d + d)):
                                     circuit.append(int_gate, qargs=ireg[:]+jreg[:]+kreg[:]+lreg[:])
 
 circuit.draw('mpl')
+
+# time evolution scheme (probably have something wrong with it in intH part)
+
+M = 2
+N_abs = 1
+d = 1
+N = N_abs * d + d + 1
+n = 1
+
+tau_0 = 1 # Wigner delay
+tau_I = 0 # length of time of interaction
+delta = 1 # time step
+coupling_lambda = 0.1
+circuit, particle_regs, anc_reg_h0, anc_reg_symm, cla_reg_symm, cla_measure, particle_1D_list = init(M, N_abs, d)
+m_0 = 0.5 # chosen to represent a relevant enrgy scale in the weak coupling regime
+hamming_list = ['1000', '1100', '0100', '0110', '0010', '0000', '0001', '0101']
+two_hamming_list = ['00', '10']
+three_hamming_list = ['000', '010', '011', '001', '101', '111', '110', '100'] # ith register corresponds to invariant register
+# three_hamming_list = ['000']
+
+tau = 0
+m_t = m_0
+lambda_t = 0
+
+m_ren = 0
+lambda_ren = 1
+
+while tau <= tau_0 + tau_I:
+    Delta = 100 * delta * lambda_t / (96 * (M ** 2))
+    # ## take summation of momenta of all particles
+    # dphi = 2 * np.pi / (2 ** anc_reg_h0.size)
+    # phi_add_gate = phiAdditionGate(dphi, particle_regs, anc_reg_h0)
+    # phi_add_gate.name = 'phi addition'
+    # circuit.append(phi_add_gate, qargs=particle_1D_list + anc_reg_h0[:])
+
+    # # inverse QFT
+    # inv_qft_gate = invQFT(len(anc_reg_h0[:]))
+    # inv_qft_gate.name = 'invQFT'
+    # circuit.append(inv_qft_gate, qargs=anc_reg_h0[:])
+
+    # ## operate Sphi gate to evolve time
+    # s_gate, cs_gate = sPhiGate(anc_reg_h0, M, delta)
+    # s_gate.name = 'Sphi gate'
+    # circuit.append(s_gate, qargs=anc_reg_h0)
+
+    # ## uncompute phi ancilla qubits
+    # # QFT
+    # # circuit.barrier()
+    # qft_gate = qFT(len(anc_reg_h0[:]))
+    # qft_gate.name = 'QFT'
+    # circuit.append(qft_gate, qargs=anc_reg_h0[:])
+    # # uncompute
+    # uncompute_gate = uncomputePhiGate(dphi, particle_regs, anc_reg_h0)
+    # uncompute_gate.name = 'uncompute phi'
+    # circuit.append(uncompute_gate, qargs=particle_1D_list + anc_reg_h0[:])
+    # circuit.barrier()
+
+    # for imode in range(2 ** N_abs):
+    #     for inum, ireg in enumerate(particle_regs):
+    #         for jnum, jreg in enumerate(particle_regs):
+    #             if inum != jnum:
+    #                 sq_gate, modebit = squeezeGate(imode, ireg, jreg)
+    #                 sq_gate.name = f'mode{imode+(1/2)} sq'
+    #                 circuit.append(sq_gate, qargs=ireg[:] + jreg[:])
+
+    # circuit.barrier()
+
+    # # symmetric QFT
+    # for ireg in range(M):
+    #     change_gate = changeBasis(particle_regs[ireg])
+    #     change_gate.name = 'change basis'
+    #     circuit.append(change_gate, qargs=particle_regs[ireg][:])
+    #     qft_gate =qFT(particle_regs[ireg].size-1)
+    #     qft_gate.name = 'QFT'
+    #     circuit.append(qft_gate, qargs=particle_regs[ireg][:-1])
+
+    # circuit.barrier()
+
+    for ipos in range(2 ** (N_abs * d + d)):
+        for inum, ireg in enumerate(particle_regs):
+            for jnum, jreg in enumerate(particle_regs):
+                for knum, kreg in enumerate(particle_regs):
+                    for lnum, lreg in enumerate(particle_regs):
+                        if inum <= jnum and jnum <= knum and knum <= lnum:
+                            if inum == jnum:
+                                if jnum == knum:
+                                    if knum == lnum:
+                                        int_gate = intHamiltonianFourIndices(ireg, ipos, Delta)
+                                        int_gate.name = f'pos{ipos} intH4'
+                                        circuit.append(int_gate, qargs=ireg[:])
+                                    else:
+                                        int_gate = intHamiltonianThreeIndices(ireg, lreg, ipos, two_hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH3'
+                                        circuit.append(int_gate, qargs=ireg[:]+lreg[:])
+                                else:
+                                    if knum == lnum:
+                                        int_gate = intHamiltonianTwoPairs(ireg, kreg, ipos, two_hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH22'
+                                        circuit.append(int_gate, qargs=ireg[:]+kreg[:])
+                                    else:
+                                        int_gate = intHamiltonianTwoIndices(ireg, kreg, lreg, ipos, three_hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH2'
+                                        circuit.append(int_gate, qargs=ireg[:]+kreg[:]+lreg[:])
+                            else:
+                                if jnum == knum:
+                                    if knum == lnum:
+                                        int_gate = intHamiltonianThreeIndices(ireg, jreg, ipos, two_hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH3'
+                                        # circuit.append(int_gate, qargs=ireg[:]+jreg[:])
+                                    else:
+                                        int_gate = intHamiltonianTwoIndices(jreg, ireg, lreg, ipos, three_hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH2'
+                                        circuit.append(int_gate, qargs=jreg[:]+ireg[:]+lreg[:])
+                                else:
+                                    if knum == lnum:
+                                        int_gate = intHamiltonianTwoIndices(kreg, ireg, jreg, ipos, three_hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH2'
+                                        circuit.append(int_gate, qargs=kreg[:]+ireg[:]+jreg[:])
+                                    else:
+                                        int_gate = interactionHamiltonianAllDiffer(ireg, jreg, kreg, lreg, ipos, hamming_list, Delta)
+                                        int_gate.name = f'pos{ipos} intH'
+                                        circuit.append(int_gate, qargs=ireg[:]+jreg[:]+kreg[:]+lreg[:])
+        circuit.barrier()
+
+    # circuit.barrier()
+
+    # # symmetric QFT
+    # for ireg in range(M):
+    #     inv_qft_gate =invQFT(particle_regs[ireg].size-1)
+    #     inv_qft_gate.name = 'invQFT'
+    #     circuit.append(inv_qft_gate, qargs=particle_regs[ireg][:-1])
+    #     change_gate = changeBasis(particle_regs[ireg])
+    #     change_gate.name = 'change basis'
+    #     circuit.append(change_gate, qargs=particle_regs[ireg][:])
+
+    tau += delta
+    if tau < tau_0: # turn on interaction adiabatically
+        lambda_t = lambda_ren * (tau / tau_0)
+        m_t = m_0 * (1 - (tau / tau_0)) + m_ren * (tau / tau_0)
+    elif tau_0 <= tau : # interaction completely
+        m_t = m_ren
+        lambda_t = lambda_ren
+    circuit.barrier()
+
+# circuit.decompose().draw('mpl')

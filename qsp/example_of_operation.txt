@@ -480,3 +480,18 @@ while tau <= tau_0 + tau_I:
     circuit.barrier()
 
 # circuit.decompose().draw('mpl')
+
+
+def threeIndicesOp(ireg, jreg, ipos, Delta):
+    A = annihilationCreationOpPerRegInPos(ipos, ireg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, ireg, True, N, M)
+    B = annihilationCreationOpPerRegInPos(ipos, jreg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, jreg, True, N, M)
+    ln_exp = -1j * Delta * A @ B
+    return expm(ln_exp)
+
+def allDifferOp(ireg, jreg, kreg, lreg, ipos, Delta):
+    A = annihilationCreationOpPerRegInPos(ipos, ireg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, ireg, True, N, M)
+    B = annihilationCreationOpPerRegInPos(ipos, jreg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, jreg, True, N, M)
+    C = annihilationCreationOpPerRegInPos(ipos, kreg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, kreg, True, N, M)
+    D = annihilationCreationOpPerRegInPos(ipos, lreg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, lreg, True, N, M)
+    ln_exp = -1j * Delta * (A @ B @ C @ D)
+    return expm(ln_exp)

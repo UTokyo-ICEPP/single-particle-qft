@@ -495,3 +495,122 @@ def allDifferOp(ireg, jreg, kreg, lreg, ipos, Delta):
     D = annihilationCreationOpPerRegInPos(ipos, lreg, False, N, M) + annihilationCreationOpPerRegInPos(ipos, lreg, True, N, M)
     ln_exp = -1j * Delta * (A @ B @ C @ D)
     return expm(ln_exp)
+
+# free time evolution previous implement
+
+# you can check the motion of wave packets
+# time evolution scheme
+n = 1
+M = 1
+N_abs = 3
+N = N_abs + 2
+a_s = 1
+m = 0
+circuit, particle_regs, anc_reg_h0, anc_reg_symm, cla_reg_symm, cla_measure, particle_1D_list = init(M, N_abs, d)
+
+# delta_t = np.pi/3 * 4
+delta_t = 5
+pos_trans_mat = np.zeros((n, d))
+pos_trans_mat[0][0] = 8 # 第0量子レジスタの第0次元に存在する粒子をhogehogeマス移動
+mom_trans_mat = np.zeros((n, d))
+mom_trans_mat[0][0] = 2 # 第0量子レジスタの第0次元に存在する粒子の運動量の中心をhogehogeマス移動
+
+# ## localize wave packets
+# for ireg in range(n):
+#     # gauss_gate = preWavePacket(particle_regs[ireg])
+#     wave_packet_gate = wavePacket(particle_regs[ireg])
+#     wave_packet_gate.name = f'{ireg}th wave packet'
+#     circuit.append(wave_packet_gate, qargs=particle_regs[ireg][:])
+
+# # circuit.x(particle_regs[0][0])
+# circuit.x(particle_regs[0][1])
+# circuit.x(particle_regs[0][2])
+
+## translation in position space
+# change basis
+# circuit.barrier()
+
+# for ireg in range(n):
+#     basis_change_gate = changeBasis(particle_regs[ireg])
+#     basis_change_gate.name = 'change basis'
+#     circuit.append(basis_change_gate, qargs=particle_regs[ireg][:])
+
+# for ireg in range(n): # ireg番目の量子レジスタに作用
+#     for idim in range(d): # idim次元目を考える
+#         trans_gate = translateGate(pos_trans_mat[ireg][idim], particle_regs[ireg], True)
+#         trans_gate.name = f'{ireg}th position {pos_trans_mat[ireg][idim]} trans'
+#         circuit.append(trans_gate, qargs=particle_regs[ireg][:])
+
+## translation in momentum space
+# circuit.barrier()
+
+# # QFT
+# for ireg in range(n):
+#     qft_gate = qFT(particle_regs[ireg].size-1)
+#     qft_gate.name = 'QFT'
+#     circuit.append(qft_gate, qargs=particle_regs[ireg][:N-1])
+
+# ## translation
+# for ireg in range(n): # ireg番目の量子レジスタに作用
+#     for idim in range(d): # idim次元目を考える
+#         trans_gate = translateGate(mom_trans_mat[ireg][idim], particle_regs[ireg], False)
+#         trans_gate.name = f'{ireg}th momentum {mom_trans_mat[ireg][idim]} trans'
+#         circuit.append(trans_gate, qargs=particle_regs[ireg][:])
+
+# # inverse symmetric QFT
+# for ireg in range(n):
+#     inv_qft_gate = invQFT(particle_regs[ireg].size-1)
+#     inv_qft_gate.name = 'inverse QFT'
+#     circuit.append(inv_qft_gate, qargs=particle_regs[ireg][:N-1])
+
+# ## change basis
+# for ireg in range(n):
+#     basis_change_gate = changeBasis(particle_regs[ireg])
+#     basis_change_gate.name = 'change basis'
+#     circuit.append(basis_change_gate, qargs=particle_regs[ireg][:])
+
+## take summation of momenta of all particles
+dphi = 2 * np.pi / (2 ** anc_reg_h0.size)
+phi_add_gate = phiAdditionGate(dphi, particle_regs, anc_reg_h0)
+phi_add_gate.name = 'phi addition'
+circuit.append(phi_add_gate, qargs=particle_1D_list + anc_reg_h0[:])
+
+# inverse QFT
+inv_qft_gate = invQFT(len(anc_reg_h0[:]))
+inv_qft_gate.name = 'invQFT'
+circuit.append(inv_qft_gate, qargs=anc_reg_h0[:])
+
+## operate Sphi gate to evolve time
+s_gate, cs_gate = sPhiGate(anc_reg_h0, M, delta_t, a_s, m)
+s_gate.name = 'Sphi gate'
+circuit.append(s_gate, qargs=anc_reg_h0)
+
+## uncompute phi ancilla qubits
+# QFT
+circuit.barrier()
+qft_gate = qFT(len(anc_reg_h0[:]))
+qft_gate.name = 'QFT'
+circuit.append(qft_gate, qargs=anc_reg_h0[:])
+# uncompute
+uncompute_gate = uncomputePhiGate(dphi, particle_regs, anc_reg_h0)
+uncompute_gate.name = 'uncompute phi'
+circuit.append(uncompute_gate, qargs=particle_1D_list + anc_reg_h0[:])
+
+# # operate Sphi gate to evolve time
+# s_gate, cs_gate = sPhi(M, delta_t, particle_regs, a_s, m)
+# s_gate.name = 'Sphi gate'
+# circuit.append(s_gate, qargs=particle_1D_list)
+
+
+# ## you can check the motion of the wave packet
+# # change basis
+# for ireg in range(n):
+#     basis_change_gate = changeBasis(particle_regs[ireg])
+#     basis_change_gate.name = 'change basis'
+#     circuit.append(basis_change_gate, qargs=particle_regs[ireg][:])
+# # QFT
+# qft_gate = qFT(len(particle_regs[0][:N-1]))
+# qft_gate.name = 'QFT'
+# circuit.append(qft_gate, qargs=particle_regs[0][:N-1])
+
+# circuit.decompose().draw('mpl')

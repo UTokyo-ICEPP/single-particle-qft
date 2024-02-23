@@ -614,3 +614,48 @@ circuit.append(uncompute_gate, qargs=particle_1D_list + anc_reg_h0[:])
 # circuit.append(qft_gate, qargs=particle_regs[0][:N-1])
 
 # circuit.decompose().draw('mpl')
+
+## Bose symmetrization (M=3, n=2)
+M = 3
+n = 2
+circuit.barrier()
+circuit, particle_regs, anc_reg_symm, anc_reg_sym_marker, particle_1D_list = init(M, N_abs, d, s, bose_marker)
+# n, Mに応じて改訂する必要あり
+circuit.h(anc_reg_symm[:s-1])
+swapnum = 0
+for ireg in range(M):
+    for jreg in range(M):
+        if ireg > jreg:
+            for iqubit in range(N):
+                circuit.cswap(anc_reg_symm[swapnum], particle_regs[ireg][iqubit], particle_regs[jreg][iqubit])
+            swapnum += 1
+        # circuit.barrier()
+# circuit.x(anc_reg_symm[0]) # anc_reg_symm[0]を制御ビットとしてanc_reg_symm[0]を標的ビットにすることはできない？
+
+# # for |1,1,0>
+# circuit.x(anc_reg_symm[s-1])
+# measured_bit = checkBoseSymm(circuit, anc_reg_symm, cla_reg_symm)
+# circuit.x(anc_reg_symm[s-1])
+# # for |0,1,0>
+# circuit.x(anc_reg_symm[0])
+# circuit.x(anc_reg_symm[s-1])
+# measured_bit = checkBoseSymm(circuit, anc_reg_symm, cla_reg_symm)
+# circuit.x(anc_reg_symm[0])
+# circuit.x(anc_reg_symm[s-1])
+
+# circuit.draw('mpl')
+
+# ## Bose symmetrization (M=2, n=1)
+
+# circuit.barrier()
+# circuit, particle_regs, anc_reg_h0, anc_reg_symm, cla_reg_symm, cla_measure, particle_1D_list = init(3, N_abs, d)
+# # n, Mに応じて改訂する必要あり
+# circuit.h(anc_reg_symm[:s])
+# for ireg in range(M):
+#     for jreg in range(M):
+#         for iqubit in range(N):
+#             if ireg > jreg:
+#                 circuit.cswap(anc_reg_symm[0], particle_regs[ireg][iqubit], particle_regs[jreg][iqubit])
+# # circuit.x(anc_reg_symm[0]) # anc_reg_symm[0]を制御ビットとしてanc_reg_symm[0]を標的ビットにすることはできない？
+
+# circuit.cx(particle_regs[1][N - 1], anc_reg_symm[:s])
